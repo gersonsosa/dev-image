@@ -74,10 +74,8 @@ RUN mkdir -p $HOME/local/share/fonts \
     && cd $HOME/local/share/fonts \
     && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf
 
-RUN curl -sSLO https://starship.rs/install.sh \
-    && chmod +x install.sh \
-    && ./install.sh --yes \
-    && echo 'starship init fish | source' >> ~/.config/fish/config.fish
+RUN cargo install starship --locked \
+    && mkdir -p $HOME/.config/fish \
+    && echo 'starship init fish | source' >> $HOME/.config/fish/config.fish
 
 ENV SHELL=/usr/bin/fish
-RUN rm -rf $TOOLS
