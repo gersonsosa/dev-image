@@ -4,6 +4,16 @@ RUN apt-get update && apt-get install -yq \
     sudo \
     software-properties-common \
     ninja-build \
+    build-essential \
+    iputils-ping \
+    man-db \
+    stow \
+    time \
+    multitail \
+    ssl-cert \
+    pkg-config \
+    libssh-dev \
+    locales \
     gettext \
     cmake \
     zip \
@@ -17,23 +27,57 @@ RUN apt-get update && apt-get install -yq \
     fish \
     fzf \
     fzy \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
+    mosh \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
+    && locale-gen en_US.UTF-8
 
 RUN add-apt-repository -y ppa:git-core/ppa
 RUN apt-get update && apt-get install -yq \
     git git-lfs
 
-# install dev tools: ripgrep, fd, exa using cargo
+RUN git lfs install --system --skip-repo
 
 RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod
 
+# start installing dev tools with final user
+USER gitpod
+
 ENV HOME=/home/gitpod
 WORKDIR $HOME
-RUN git lfs install --system --skip-repo
+# install dev tools: ripgrep, fd, exa using cargo
+ENV PATH=$HOME/.cargo/bin:$PATH
+
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain stable \
+        -c rls rust-analysis rust-src rustfmt clippy miri rust-analyzer \
+    && mkdir -p ~/.config/fish/completions \
+    && rustup completions fish > "$HOME/.config/fish/completions/rustup.fish" \
+    && printf '%s\n'    'export CARGO_HOME=/workspace/.cargo' \
+                        'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
+                        'export PATH=$CARGO_HOME/bin:$PATH' \
+                        'test ! -e "$CARGO_HOME/bin/rustup" && mv "$(command -v rustup)" "$CARGO_HOME/bin"' > $HOME/.config/fish/rust.fish \
+    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa \
+    && rm -rf "$HOME/.cargo/registry" # This registry cache is now useless as we change the CARGO_HOME path to `/workspace`
+
+ENV TOOLS=$HOME/tools
+RUN mkdir -p $TOOLS
+WORKDIR $TOOLS
 
 # build neovim
-RUN git clone https://github.com/neovim/neovim && cd neovim \
-    && make CMAKE_INSTALL_PREFIX=$HOME/local/nvim install \
-    && sudo ln -s $HOME/local/nvim/bin/nvim /usr/local/bin/
+RUN git clone https://github.com/neovim/neovim \
+    && cd neovim \
+    && git checkout stable \
+    && make CMAKE_INSTALL_PREFIX=$HOME/local/nvim install
 
-USER gitpod
+ENV PATH=$HOME/local/nvim/bin:$PATH
+
+RUN mkdir -p $HOME/local/share/fonts \
+    && cd $HOME/local/share/fonts \
+    && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf
+
+RUN curl -sSLO https://starship.rs/install.sh \
+    && chmod +x install.sh \
+    && ./install.sh --yes \
+    && echo 'starship init fish | source' >> ~/.config/fish/config.fish
+
+ENV SHELL=/usr/bin/fish
+RUN rm -rf $TOOLS
