@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -yq \
     fish \
     fzf \
     fzy \
-    mosh \
+    tmux \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && locale-gen en_US.UTF-8
 
@@ -51,11 +51,12 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-
         -c rls rust-analysis rust-src rustfmt clippy miri rust-analyzer \
     && mkdir -p ~/.config/fish/completions \
     && rustup completions fish > "$HOME/.config/fish/completions/rustup.fish" \
-    && printf '%s\n'    'export CARGO_HOME=/workspace/.cargo' \
+    && mkdir -p ~/.config/fish/conf.d \
+    && printf '%s\n'    'export CARGO_HOME=$HOME/.cargo' \
                         'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
                         'export PATH=$CARGO_HOME/bin:$PATH' \
-                        'test ! -e "$CARGO_HOME/bin/rustup" && mv "$(command -v rustup)" "$CARGO_HOME/bin"' > $HOME/.config/fish/rust.fish \
-    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa \
+                        'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish \
+    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa bat tree-sitter-cli fnm \
     && rm -rf "$HOME/.cargo/registry" # This registry cache is now useless as we change the CARGO_HOME path to `/workspace`
 
 ENV TOOLS=$HOME/tools
@@ -77,5 +78,7 @@ RUN mkdir -p $HOME/local/share/fonts \
 RUN cargo install starship --locked \
     && mkdir -p $HOME/.config/fish \
     && echo 'starship init fish | source' >> $HOME/.config/fish/config.fish
+
+RUN fnm install v20 && fnm default v20
 
 ENV SHELL=/usr/bin/fish
