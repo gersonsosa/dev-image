@@ -78,6 +78,8 @@ RUN cargo install starship --locked \
     && mkdir -p $HOME/.config/fish \
     && echo 'starship init fish | source' >> $HOME/.config/fish/config.fish
 
-RUN fnm install v20 && fnm default v20
+RUN fnm install v20 && fnm default v20 \
+    && fnm completions > $HOME/.config/fish/completions/fnm.fish \
+    && echo 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
 
 ENV SHELL=/usr/bin/fish
