@@ -56,8 +56,7 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-
                         'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
                         'export PATH=$CARGO_HOME/bin:$PATH' \
                         'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish \
-    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa bat tree-sitter-cli fnm \
-    && rm -rf "$HOME/.cargo/registry" # This registry cache is now useless as we change the CARGO_HOME path to `/workspace`
+    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa bat tree-sitter-cli fnm
 
 ENV TOOLS=$HOME/tools
 RUN mkdir -p $TOOLS
