@@ -76,7 +76,7 @@ RUN mkdir -p $HOME/local/share/fonts \
 
 RUN cargo install starship --locked \
     && mkdir -p $HOME/.config/fish \
-    && echo 'starship init fish | source' >> $HOME/.config/fish/config.fish
+    && echo 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish
 
 RUN fnm install v20 && fnm default v20 \
     && fnm completions > $HOME/.config/fish/completions/fnm.fish \
