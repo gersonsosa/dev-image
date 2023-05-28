@@ -37,7 +37,19 @@ RUN apt-get update && apt-get install -yq \
 
 RUN git lfs install --system --skip-repo
 
+ENV TOOLS=/tmp/tools
+RUN mkdir -p $TOOLS
+WORKDIR $TOOLS
+
+# install neovim
+RUN git clone https://github.com/neovim/neovim \
+    && cd neovim \
+    && git checkout stable \
+    && make install # CMAKE_INSTALL_PREFIX=$HOME/local/nvim \
+    && rm -rf $TOOLS
+
 RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod
+RUN chsh --shell /usr/bin/fish gitpod
 
 # start installing dev tools with final user
 USER gitpod
@@ -57,32 +69,28 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-
                         'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
                         'export PATH=$CARGO_HOME/bin:$PATH' \
                         'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish \
-    && cargo install cargo-watch cargo-edit cargo-workspaces ripgrep fd-find procs du-dust exa bat tree-sitter-cli fnm
+    && cargo install --locked \
+    cargo-watch \
+    cargo-edit \
+    cargo-workspaces \
+    ripgrep \
+    fd-find \
+    procs \
+    du-dust \
+    exa \
+    bat \
+    tree-sitter-cli \
+    fnm \
+    starship
 
-ENV TOOLS=$HOME/tools
-RUN mkdir -p $TOOLS
-WORKDIR $TOOLS
-
-# install neovim
-RUN git clone https://github.com/neovim/neovim \
-    && cd neovim \
-    && git checkout stable \
-    && make CMAKE_INSTALL_PREFIX=$HOME/local/nvim install
-
-ENV PATH=$HOME/local/nvim/bin:$PATH
-
+# configure fish
 RUN mkdir -p $HOME/local/share/fonts \
     && cd $HOME/local/share/fonts \
-    && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf
-
-RUN cargo install starship --locked \
+    && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf \
     && mkdir -p $HOME/.config/fish \
-    && echo 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish
-
-RUN fnm install v20 && fnm default v20 \
-    && fnm completions > $HOME/.config/fish/completions/fnm.fish \
-    && echo 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
+    && printf '%s\n' 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish \
+    && fnm install v20 && fnm default v20 \
+    && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
+    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
 
 ENV SHELL=/usr/bin/fish
-
-RUN fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
