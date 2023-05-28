@@ -44,7 +44,8 @@ USER gitpod
 
 ENV HOME=/home/gitpod
 WORKDIR $HOME
-# install dev tools: ripgrep, fd, exa using cargo
+
+# install dev tools using cargo
 ENV PATH=$HOME/.cargo/bin:$PATH
 
 RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain stable \
@@ -62,7 +63,7 @@ ENV TOOLS=$HOME/tools
 RUN mkdir -p $TOOLS
 WORKDIR $TOOLS
 
-# build neovim
+# install neovim
 RUN git clone https://github.com/neovim/neovim \
     && cd neovim \
     && git checkout stable \
@@ -83,3 +84,5 @@ RUN fnm install v20 && fnm default v20 \
     && echo 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
 
 ENV SHELL=/usr/bin/fish
+
+RUN fish -c "curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher"
