@@ -1,7 +1,19 @@
-FROM archlinux:base-devel
+FROM ubuntu:latest
 
-RUN pacman -Syu --noconfirm \
+RUN apt-get update && apt-get install -yq \
     sudo \
+    software-properties-common \
+    ninja-build \
+    build-essential \
+    iputils-ping \
+    man-db \
+    stow \
+    time \
+    multitail \
+    ssl-cert \
+    pkg-config \
+    libssh-dev \
+    locales \
     gettext \
     cmake \
     zip \
@@ -11,33 +23,33 @@ RUN pacman -Syu --noconfirm \
     jq \
     less \
     htop \
-    bottom \
     lsof \
     fish \
     fzf \
     fzy \
     tmux \
-    git \
-    git-lfs \
-    neovim \
-    cargo-watch \
-    cargo-edit \
-    ripgrep \
-    fd \
-    procs \
-    dust \
-    exa \
-    bat \
-    starship \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
     && locale-gen en_US.UTF-8
 
-    # cargo-workspaces \
-    # tree-sitter-cli \
-    # fnm \
+RUN add-apt-repository -y ppa:git-core/ppa
+RUN apt-get update && apt-get install -yq \
+    git git-lfs
 
 RUN git lfs install --system --skip-repo
 
-RUN useradd -l -u 33333 -G wheel -md /home/gitpod -s /usr/bin/fish -p gitpod gitpod
+ENV TOOLS=/tmp/tools
+RUN mkdir -p $TOOLS
+WORKDIR $TOOLS
+
+# install neovim
+RUN git clone https://github.com/neovim/neovim \
+    && cd neovim \
+    && git checkout stable \
+    && make install # CMAKE_INSTALL_PREFIX=$HOME/local/nvim \
+    && rm -rf $TOOLS
+
+RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod
+RUN chsh --shell /usr/bin/fish gitpod
 
 # start installing dev tools with final user
 USER gitpod
@@ -56,9 +68,20 @@ RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-
     && printf '%s\n'    'export CARGO_HOME=$HOME/.cargo' \
                         'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
                         'export PATH=$CARGO_HOME/bin:$PATH' \
-                        'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish
-
-RUN curl -fLO https://raw.githubusercontent.com/Schniz/fnm/master/.ci/install.sh | fish --
+                        'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish \
+    && cargo install --locked \
+    cargo-watch \
+    cargo-edit \
+    cargo-workspaces \
+    ripgrep \
+    fd-find \
+    procs \
+    du-dust \
+    exa \
+    bat \
+    tree-sitter-cli \
+    fnm \
+    starship
 
 # configure fish
 RUN mkdir -p $HOME/local/share/fonts \

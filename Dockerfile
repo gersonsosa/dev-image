@@ -1,19 +1,7 @@
-FROM ubuntu:latest
+FROM archlinux:base-devel
 
-RUN apt-get update && apt-get install -yq \
+RUN pacman -Syu --noconfirm \
     sudo \
-    software-properties-common \
-    ninja-build \
-    build-essential \
-    iputils-ping \
-    man-db \
-    stow \
-    time \
-    multitail \
-    ssl-cert \
-    pkg-config \
-    libssh-dev \
-    locales \
     gettext \
     cmake \
     zip \
@@ -23,74 +11,53 @@ RUN apt-get update && apt-get install -yq \
     jq \
     less \
     htop \
+    bottom \
     lsof \
     fish \
     fzf \
     fzy \
     tmux \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* \
+    git \
+    git-lfs \
+    neovim \
+    ripgrep \
+    fd \
+    procs \
+    dust \
+    exa \
+    bat \
+    starship \
+    tree-sitter \
     && locale-gen en_US.UTF-8
-
-RUN add-apt-repository -y ppa:git-core/ppa
-RUN apt-get update && apt-get install -yq \
-    git git-lfs
 
 RUN git lfs install --system --skip-repo
 
-ENV TOOLS=/tmp/tools
-RUN mkdir -p $TOOLS
-WORKDIR $TOOLS
+RUN useradd -l -u 33333 -G wheel -md /home/gitpod -s /usr/bin/fish -p gitpod gitpod
 
-# install neovim
-RUN git clone https://github.com/neovim/neovim \
-    && cd neovim \
-    && git checkout stable \
-    && make install # CMAKE_INSTALL_PREFIX=$HOME/local/nvim \
-    && rm -rf $TOOLS
-
-RUN useradd -l -u 33333 -G sudo -md /home/gitpod -s /bin/bash -p gitpod gitpod
-RUN chsh --shell /usr/bin/fish gitpod
-
-# start installing dev tools with final user
+# configure the basics with user
 USER gitpod
 
 ENV HOME=/home/gitpod
 WORKDIR $HOME
 
-# install dev tools using cargo
-ENV PATH=$HOME/.cargo/bin:$PATH
+RUN mkdir -p $HOME/.config/fish/conf.d \
+    && mkdir -p $HOME/.config/fish/completions
 
-RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain stable \
-        -c rls rust-analysis rust-src rustfmt clippy miri rust-analyzer \
-    && mkdir -p ~/.config/fish/completions \
-    && rustup completions fish > "$HOME/.config/fish/completions/rustup.fish" \
-    && mkdir -p ~/.config/fish/conf.d \
-    && printf '%s\n'    'export CARGO_HOME=$HOME/.cargo' \
-                        'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
-                        'export PATH=$CARGO_HOME/bin:$PATH' \
-                        'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish \
-    && cargo install --locked \
-    cargo-watch \
-    cargo-edit \
-    cargo-workspaces \
-    ripgrep \
-    fd-find \
-    procs \
-    du-dust \
-    exa \
-    bat \
-    tree-sitter-cli \
-    fnm \
-    starship
+# install node tools
+RUN curl -fLO https://raw.githubusercontent.com/Schniz/fnm/master/.ci/install.sh \
+    && chmod +x install.sh \
+    && ./install.sh
+
+ENV PATH=$HOME/.local/share/fnm:$PATH
+
+RUN fnm install v20 && fnm default v20 \
+    && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
+    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
 
 # configure fish
 RUN mkdir -p $HOME/local/share/fonts \
     && cd $HOME/local/share/fonts \
     && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf \
-    && mkdir -p $HOME/.config/fish \
-    && printf '%s\n' 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish \
-    && fnm install v20 && fnm default v20 \
-    && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
-    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
+    && printf '%s\n' 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish
 
 ENV SHELL=/usr/bin/fish
