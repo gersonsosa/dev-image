@@ -1,4 +1,4 @@
-FROM hghar/ubuntu-dev-gitpod:latest
+FROM hghar/arch-dev-gitpod:latest
 
 ARG JAVA_VERSION
 
@@ -20,7 +20,7 @@ RUN curl -fsSL "https://get.sdkman.io" | bash \
              && sdk flush temp \
              && mkdir /home/gitpod/.m2 \
              && printf '<settings>\n  <localRepository>/workspace/m2-repository/</localRepository>\n</settings>\n' > /home/gitpod/.m2/settings.xml"
-RUN fish -c "fisher install reitzig/sdkman-for-fish@v1.4.0"
+
 # above, we are adding the sdkman init to .bashrc (executing sdkman-init.sh does that), because one is executed on interactive shells, the other for non-interactive shells (e.g. plugin-host)
 ENV GRADLE_USER_HOME=/workspace/.gradle/
 
@@ -28,4 +28,5 @@ ENV GRADLE_USER_HOME=/workspace/.gradle/
 # run in tools
 RUN curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs \
     && chmod +x cs && ./cs setup --yes \
+    && export PATH=$HOME/.local/share/coursier/bin:$PATH \
     && cs install bloop scala-cli
