@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./rust
-          file: ./Dockerfile
+          file: ./rust/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/rust-arch-gitpod:latest
       -
@@ -42,7 +42,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./java
-          file: ./Dockerfile
+          file: ./java/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-arch-gitpod:latest
           build-args: |
