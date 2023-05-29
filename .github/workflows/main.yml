@@ -37,3 +37,11 @@ jobs:
           file: ./Dockerfile.ubuntu
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/ubuntu-dev-gitpod:latest
+      -
+        name: Build and push arch rust image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./rust
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/rust-arch-gitpod:latest
