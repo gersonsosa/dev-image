@@ -1,0 +1,73 @@
+FROM archlinux:base-devel
+
+RUN pacman -Syu --noconfirm \
+    sudo \
+    gettext \
+    cmake \
+    zip \
+    unzip \
+    curl \
+    wget \
+    jq \
+    less \
+    htop \
+    bottom \
+    lsof \
+    fish \
+    fzf \
+    fzy \
+    tmux \
+    git \
+    git-lfs \
+    neovim \
+    cargo-watch \
+    cargo-edit \
+    ripgrep \
+    fd \
+    procs \
+    dust \
+    exa \
+    bat \
+    starship \
+    && locale-gen en_US.UTF-8
+
+    # cargo-workspaces \
+    # tree-sitter-cli \
+    # fnm \
+
+RUN git lfs install --system --skip-repo
+
+RUN useradd -l -u 33333 -G wheel -md /home/gitpod -s /usr/bin/fish -p gitpod gitpod
+
+# start installing dev tools with final user
+USER gitpod
+
+ENV HOME=/home/gitpod
+WORKDIR $HOME
+
+# install dev tools using cargo
+ENV PATH=$HOME/.cargo/bin:$PATH
+
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain stable \
+        -c rls rust-analysis rust-src rustfmt clippy miri rust-analyzer \
+    && mkdir -p ~/.config/fish/completions \
+    && rustup completions fish > "$HOME/.config/fish/completions/rustup.fish" \
+    && mkdir -p ~/.config/fish/conf.d \
+    && printf '%s\n'    'export CARGO_HOME=$HOME/.cargo' \
+                        'mkdir -m 0755 -p "$CARGO_HOME/bin" 2>/dev/null' \
+                        'export PATH=$CARGO_HOME/bin:$PATH' \
+                        'test ! -e "$CARGO_HOME/bin/rustup"; and mv (command -v rustup) "$CARGO_HOME/bin"' > $HOME/.config/fish/conf.d/rust.fish
+
+RUN curl -fLO https://raw.githubusercontent.com/Schniz/fnm/master/.ci/install.sh | fish --
+
+# configure fish
+RUN mkdir -p $HOME/local/share/fonts \
+    && cd $HOME/local/share/fonts \
+    && curl -fLO https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/FiraMono/Regular/FiraMonoNerdFont-Regular.otf \
+    && mkdir -p $HOME/.config/fish \
+    && printf '%s\n' 'starship init fish | source' > $HOME/.config/fish/conf.d/starship.fish \
+    && fnm install v20 && fnm default v20 \
+    && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
+    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
+
+ENV SHELL=/usr/bin/fish
