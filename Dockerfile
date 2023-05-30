@@ -32,7 +32,7 @@ RUN pacman -Syu --noconfirm \
 
 RUN git lfs install --system --skip-repo
 
-RUN useradd -l -u 33333 -G wheel -md /home/gitpod -s /usr/bin/fish -p gitpod gitpod
+RUN useradd -l -u 33333 -G wheel -md /home/gitpod -s /bin/bash -p gitpod gitpod
 
 # configure the basics with user
 USER gitpod
@@ -52,7 +52,8 @@ ENV PATH=$HOME/.local/share/fnm:$PATH
 
 RUN fnm install v20 && fnm default v20 \
     && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
-    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish
+    && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish \
+    && fish -c 'fish_add_path $HOME/.local/share/fnm'
 
 # configure fish
 RUN mkdir -p $HOME/local/share/fonts \
