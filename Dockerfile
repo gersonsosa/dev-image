@@ -44,15 +44,13 @@ RUN mkdir -p $HOME/.config/fish/conf.d \
     && mkdir -p $HOME/.config/fish/completions
 
 # install node tools
-RUN curl -fLO https://raw.githubusercontent.com/Schniz/fnm/master/.ci/install.sh \
-    && chmod +x install.sh \
-    && ./install.sh
+RUN curl -fsSL https://fnm.vercel.app/install | bash
 
 ENV PATH=$HOME/.local/share/fnm:$PATH
 
 RUN fnm install v20 && fnm default v20 \
-    && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
     && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish \
+    # && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
     && fish -c 'fish_add_path $HOME/.local/share/fnm'
 
 # configure fish
