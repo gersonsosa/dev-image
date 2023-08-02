@@ -28,6 +28,7 @@ RUN pacman -Syu --noconfirm \
     bat \
     starship \
     tree-sitter \
+    tree-sitter-cli \
     && locale-gen en_US.UTF-8
 
 RUN git lfs install --system --skip-repo
@@ -50,8 +51,8 @@ ENV PATH=$HOME/.local/share/fnm:$PATH
 
 RUN fnm install v20 && fnm default v20 \
     && printf '%s\n' 'fnm env --use-on-cd | source' > $HOME/.config/fish/conf.d/fnm.fish \
-    # && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
     && fish -c 'fish_add_path $HOME/.local/share/fnm'
+    # && fnm completions --shell=fish > $HOME/.config/fish/completions/fnm.fish \
 
 # configure fish
 RUN mkdir -p $HOME/local/share/fonts \

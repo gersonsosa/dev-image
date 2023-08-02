@@ -29,4 +29,6 @@ ENV GRADLE_USER_HOME=/workspace/.gradle/
 RUN curl -fL "https://github.com/coursier/launchers/raw/master/cs-x86_64-pc-linux.gz" | gzip -d > cs \
     && chmod +x cs && ./cs setup --yes \
     && export PATH=$HOME/.local/share/coursier/bin:$PATH \
-    && cs install bloop scala-cli
+    && cs install bloop scala-cli \
+    && fish -c "fish_add_path $HOME/.local/share/coursier/bin" \
+    && printf '%s\n'    'cs setup --yes' > $HOME/.config/fish/conf.d/scala.fish
