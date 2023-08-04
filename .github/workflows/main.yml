@@ -46,7 +46,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/java-arch-gitpod:latest
           build-args: |
-            JAVA_VERSION=${{ env.JAVA_VERSION }}
+            JAVA_VERSION=${{ vars.JAVA_VERSION }}
       -
         name: Build and push ubuntu image
         uses: docker/build-push-action@v4
